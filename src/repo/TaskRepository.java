@@ -14,7 +14,7 @@ public interface TaskRepository {
 
     List<Task> getAllTasksSortedByPriority();
 
-    Task addTask(Task task);
+    void addTask(Task task);
 
     void saveToFile(String fileName);
 
