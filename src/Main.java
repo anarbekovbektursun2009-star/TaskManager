@@ -28,7 +28,7 @@ public class Main {
             System.out.println("4. Delete task");
             System.out.println("5. Sort by priority");
             System.out.println("6. Save task to file and stop process");
-            System.out.print("Choic4e: ");
+            System.out.print("Choice: ");
 
             try {
                 int choice = Integer.parseInt(scanner.nextLine());
