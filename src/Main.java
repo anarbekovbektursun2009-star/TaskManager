@@ -1,22 +1,24 @@
 import entity.Task;
 import enums.Priority;
-import enums.Status;
 import repo.TaskRepository;
 import repo.impl.TaskRepositoryImpl;
+import service.TaskService;
+import storage.TaskFileStorage;
 
 import java.util.List;
 import java.util.Scanner;
 
-//TIP Чтобы <b>запустить</b> код, нажмите <shortcut actionId="Run"/> или
-// нажмите на значок <icon src="AllIcons.Actions.Execute"/> на полях.
 public class Main {
     public static void main(String[] args) {
         TaskRepository repository = new TaskRepositoryImpl();
-        repository.loadFromFile("tasks.txt");
+        TaskFileStorage storage = new TaskFileStorage();
+        TaskService taskService = new TaskService(repository, storage);
+
+        taskService.loadFromFile("tasks.txt");
 
         System.out.println();
         System.out.println("Task list:");
-        printTasks(repository.findAll());
+        printTasks(taskService.getAllTasks());
 
         Scanner scanner = new Scanner(System.in);
 
@@ -37,49 +39,57 @@ public class Main {
                         System.out.print("Name: ");
                         String name = scanner.nextLine();
 
+                        if (name.isBlank()) {
+                            System.out.println("Task name cannot be empty!");
+                            break;
+                        }
+
                         System.out.print("Description: ");
                         String desc = scanner.nextLine();
+
+                        if (desc.isBlank()) {
+                            System.out.println("Task description cannot be empty!");
+                            break;
+                        }
 
                         System.out.print("Priority LOW, MEDIUM, HIGH: ");
                         Priority priority = Priority.valueOf(scanner.nextLine().trim().toUpperCase());
 
-                        Task newTask = new Task(null, name, desc, Status.TODO, priority);
-
-                        repository.addTask(newTask);
-
+                        taskService.addTask(name, desc, priority);
                         System.out.println("Task has been added!");
                         break;
 
                     case 2:
-                        printTasks(repository.findAll());
+                        printTasks(taskService.getAllTasks());
                         break;
 
                     case 3:
                         System.out.print("Enter the task ID: ");
                         Long compId = Long.parseLong(scanner.nextLine());
-                        if (repository.completeTask(compId)) {
+
+                        if (taskService.completeTask(compId)) {
                             System.out.println("Task completed!");
                         } else {
-                            System.out.println("Task with id: "+ compId +" not found!");
+                            System.out.println("Task not found or already completed!");
                         }
                         break;
 
                     case 4:
                         System.out.print("Enter the task ID to delete: ");
                         Long delId = Long.parseLong(scanner.nextLine());
-                        if (repository.deleteTask(delId)) {
+                        if (taskService.deleteTask(delId)) {
                             System.out.println("Task has been deleted!");
                         } else {
-                            System.out.println("Task with id: "+delId+" not found!");
+                            System.out.println("Task with id: " + delId + " not found!");
                         }
                         break;
 
                     case 5:
-                        printTasks(repository.getAllTasksSortedByPriority());
+                        printTasks(taskService.getSortedByPriority());
                         break;
 
                     case 6:
-                        repository.saveToFile("tasks.txt");
+                        taskService.saveToFile("tasks.txt");
                         System.out.println("Task has been saved to file!");
                         return;
 
@@ -87,12 +97,13 @@ public class Main {
                         System.out.println("Invalid input!");
                 }
             } catch (NumberFormatException e) {
-                System.out.println("Error:Enter only numbers");
+                System.out.println("Error: Enter only numbers");
             } catch (IllegalArgumentException e) {
-                System.out.println("Error:Choose from LOW, MEDIUM, HIGH");
+                System.out.println("Error: Choose from LOW, MEDIUM, HIGH");
             }
         }
     }
+
     private static void printTasks(List<Task> tasks) {
         if (tasks.isEmpty()) {
             System.out.println("Task list is empty!");
